@@ -684,23 +684,6 @@ with st.sidebar:
     )
     st.write(status)
 
-    with st.expander("🎙️ Multilingual speech-to-text setup"):
-        st.caption(
-            "Supported speech languages: English (India), Hindi, Bengali, Tamil, "
-            "Telugu, Marathi, Gujarati, Kannada, Malayalam, Punjabi, Urdu, Odia, "
-            "and Assamese."
-        )
-        st.code(
-            "pip install --upgrade SpeechRecognition",
-            language="bash",
-        )
-        st.caption(
-            "The microphone is captured by Streamlit's st.audio_input(), so "
-            "sounddevice/PyAudio is not required for this implementation. "
-            "SpeechRecognition sends the recorded audio to an online recognition "
-            "service, so an internet connection is required for transcription."
-        )
-
     if st.session_state.red_flags:
         st.error("🚨 Red flag detected")
 
