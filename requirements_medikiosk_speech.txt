@@ -1,0 +1,2 @@
+# MediKiosk multilingual speech-to-text dependency
+SpeechRecognition>=3.10.0
