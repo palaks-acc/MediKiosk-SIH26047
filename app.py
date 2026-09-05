@@ -1,4 +1,3 @@
-#data new
 import streamlit as st
 import json
 import re
