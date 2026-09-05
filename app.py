@@ -42,16 +42,32 @@ def init_db():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS patients (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            abha_id TEXT,
-            name TEXT,
-            age INTEGER,
-            sex TEXT,
-            language TEXT,
-            created_at TEXT
-        )
-    """)
+    CREATE TABLE IF NOT EXISTS patients (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        abha_id TEXT,
+        name TEXT,
+        age INTEGER,
+        sex TEXT,
+        language TEXT,
+        clinical_history TEXT DEFAULT '{}',
+        ayush_history TEXT DEFAULT '{}',
+        created_at TEXT
+    )
+""")
+
+# Add these columns if an older database already exists
+cur.execute("PRAGMA table_info(patients)")
+patient_columns = {row[1] for row in cur.fetchall()}
+
+if "clinical_history" not in patient_columns:
+    cur.execute(
+        "ALTER TABLE patients ADD COLUMN clinical_history TEXT DEFAULT '{}'"
+    )
+
+if "ayush_history" not in patient_columns:
+    cur.execute(
+        "ALTER TABLE patients ADD COLUMN ayush_history TEXT DEFAULT '{}'"
+    )
     cur.execute("""
         CREATE TABLE IF NOT EXISTS documents (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -96,18 +112,44 @@ def save_patient(patient):
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
     cur.execute(
-        """INSERT INTO patients
-        (abha_id, name, age, sex, language, created_at)
-        VALUES (?, ?, ?, ?, ?, ?)""",
+    """INSERT INTO patients
+    (abha_id, name, age, sex, language,
+     clinical_history, ayush_history, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+    (
+        patient.get("abha_id", ""),
+        patient.get("name", ""),
+        patient.get("age", 0),
+        patient.get("sex", ""),
+        patient.get("language", ""),
+        json.dumps(patient.get("clinical_history", {})),
+        json.dumps(patient.get("ayush_history", {})),
+        datetime.now().isoformat(timespec="seconds"),
+    ),
+    )
+def update_patient_record(patient_id, history, ayush):
+    """Save clinical and AYUSH history for an existing patient."""
+    if not patient_id:
+        return
+
+    conn = sqlite3.connect(DB_PATH)
+
+    conn.execute(
+        """
+        UPDATE patients
+        SET clinical_history = ?,
+            ayush_history = ?
+        WHERE id = ?
+        """,
         (
-            patient.get("abha_id", ""),
-            patient.get("name", ""),
-            patient.get("age", 0),
-            patient.get("sex", ""),
-            patient.get("language", ""),
-            datetime.now().isoformat(timespec="seconds"),
+            json.dumps(history or {}, ensure_ascii=False),
+            json.dumps(ayush or {}, ensure_ascii=False),
+            patient_id,
         ),
     )
+
+    conn.commit()
+    conn.close()
     patient_id = cur.lastrowid
     conn.commit()
     conn.close()
