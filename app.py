@@ -41,7 +41,7 @@ st.set_page_config(
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-    cur.execute("""
+cur.execute("""
     CREATE TABLE IF NOT EXISTS patients (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         abha_id TEXT,
